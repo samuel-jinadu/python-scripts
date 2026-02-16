@@ -1,0 +1,60 @@
+# API Keys & Credentials
+.env
+.env.local
+.env.production
+config.ini
+secrets.json
+credentials.json
+api_keys.py
+token-drive.pickle
+token-sheets.pickle
+token.json
+credentials-sheets.json
+credentials.json
+openweathermapAPI.py
+*_key.py
+*_keys.py
+*.pem
+*.key
+
+# Python specific
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+venv/
+env/
+.venv/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# personl
+Automate_the_Boring_Stuff_3e_onlinematerials/
+Automate the Boring Stuff with Python, 3rd Edition -- Al Sweigart -- 3, PT, 2025 -- No Starch Press, Incorporated -- 9781718503403 -- bb40a6e286e8232b8199309576137923 -- Anna’s Archive.pdf
+Automate the Boring Stuff with Python, 3rd Edition.epub
+ocrPdfs/
+splitPdfToChapters/
