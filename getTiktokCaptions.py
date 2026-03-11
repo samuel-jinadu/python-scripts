@@ -7,8 +7,10 @@ print(">>> Imported required libraries.")
 os.chdir(r"C:\Users\Samuel\Desktop\Remote Job\practice\python\getTiktokCaptions")
 
 def handle_error(error = ""):
-    print(">>>", error)
-    input()
+    print(">>> ERROR:", error)
+    import traceback
+    traceback.print_exc()
+    input("Press Enter to exit...")
     sys.exit()
 
 def is_tiktok_url(url):
@@ -101,48 +103,72 @@ def vtt_to_text(vtt_content):
     
     return ' '.join(text_lines)
 
+def cleanup_audio_files():
+    """Remove all temp audio files."""
+    for ext in ['.m4a', '.webm', '.mp3', '.wav', '.mp4']:
+        f = 'temp_audio' + ext
+        if os.path.exists(f):
+            print(f">>> Cleaning up old file: {f}")
+            os.remove(f)
+
+def find_audio_file():
+    """Find the downloaded audio file with any extension."""
+    for ext in ['.m4a', '.webm', '.mp3', '.wav', '.mp4']:
+        f = 'temp_audio' + ext
+        if os.path.exists(f):
+            return f
+    return None
+
 def transcribe_with_whisper(url, lang='en', model_size='base'):
     """
     Download audio from video, transcribe using Whisper, copy to clipboard.
     Cleans up audio file after transcription.
     """
-    # Download audio only
-    audio_path = 'temp_audio.mp3'
-    ydl_opts = {
-        'format': 'bestaudio/best',
-        'postprocessors': [{
-            'key': 'FFmpegExtractAudio',
-            'preferredcodec': 'mp3',
-            'preferredquality': '192',
-        }],
-        'outtmpl': 'temp_audio',
-        'quiet': False,
-    }
+    # Clean up any existing temp files first
+    cleanup_audio_files()
+    
+    audio_path = None
+    
     try:
+        # Download audio only (no FFmpeg postprocessing)
+        ydl_opts = {
+            'format': 'bestaudio/best',
+            'outtmpl': 'temp_audio.%(ext)s',
+            'quiet': False,
+        }
+        
+        print(f">>> Downloading audio from: {url}")
         with yt_dlp.YoutubeDL(ydl_opts) as ydl:
-            if os.path.exists(audio_path):
-                os.remove(audio_path)
             info = ydl.extract_info(url, download=True)
             title = info.get('title', 'subtitles')
+            print(f">>> Video title: {title}")
+            
+        # Find the actual downloaded file
+        audio_path = find_audio_file()
+        if not audio_path:
+            print(">>> ERROR: Audio file not found after download")
+            print(">>> Files in directory:", os.listdir('.'))
+            return False
+        
+        print(f">>> Found audio file: {audio_path}")
+        print(f">>> File size: {os.path.getsize(audio_path)} bytes")
+        
     except Exception as e:
-        handle_error(e)
-
-    if not os.path.exists(audio_path):
-        print(">>> Audio download failed.")
+        handle_error(f"Download failed: {e}")
         return False
-    
+
     # Load Whisper model and transcribe
     print(f">>> Loading Whisper model '{model_size}'...")
     try:
         model = whisper.load_model(model_size)
     except Exception as e:
-        handle_error(e)
+        handle_error(f"Failed to load Whisper model: {e}")
 
     print(">>> Transcribing audio...")
     try:
         result = model.transcribe(audio_path, language=lang, task='transcribe', verbose=True)
     except Exception as e:
-        handle_error(e)
+        handle_error(f"Transcription failed: {e}")
 
     # Build transcript text (without timestamps for cleaner clipboard content)
     transcript_lines = []
@@ -156,19 +182,22 @@ def transcribe_with_whisper(url, lang='en', model_size='base'):
     print(f">>> Transcribed: {title}")
     
     # Clean up temporary audio
-    os.remove(audio_path)
+    cleanup_audio_files()
     return True
-
-# Remove unused sanitize_filename and format_timestamp functions
-# (or keep them if you want to add optional file-saving later)
 
 # Example usage
 if __name__ == '__main__':
-    url = pyperclip.paste()
-    while not is_tiktok_url(url):
-        print(">>> There must be a valid tiktok url in your clipboard!")
-        url = pyperclip.paste()
-        countdown(0,5)
-    else:
-        print(f">>> url is '{url}'")
-        get_subtitles(url, lang='en', whisper_model='base')
+    try:
+        url = pyperclip.paste().strip()
+        print(f">>> The program will check your clipboard for a valid url")
+        
+        while not is_tiktok_url(url):
+            print(">>> There must be a valid tiktok url in your clipboard!")
+            url = pyperclip.paste().strip()
+            countdown(0,5)
+        else:
+            print(f">>> URL is valid: '{url}'")
+            get_subtitles(url, lang='en', whisper_model='base')
+            
+    except Exception as e:
+        handle_error(f"Main loop error: {e}")
