@@ -39,44 +39,36 @@ for pdf in pdfs:
 		print(f"Processing '{pdf.name}'...")
 		existing_text = get_text(pdf)
 		
-		# CASE 1: No text found - Use PyMuPDF's built-in OCR
-		if len(existing_text) < 10:
-			print("  → No text found, OCR with PyMuPDF...")
+		print("  → OCR with PyMuPDF...")
+		
+		doc = fitz.open(str(pdf))
+		ocr_doc = fitz.open()  # New output document
+		total_page_num = len(doc)
+		for page_num, page in enumerate(doc):
+			print(f"    Page {page_num + 1} - {((page_num + 1)/total_page_num) * 100:.2f}%...")
 			
-			doc = fitz.open(str(pdf))
-			ocr_doc = fitz.open()  # New output document
+			# Render page to image at 300 DPI
+			mat = fitz.Matrix(300/72, 300/72)
+			pix = page.get_pixmap(matrix=mat)
 			
-			for page_num, page in enumerate(doc):
-				print(f"    Page {page_num + 1}...")
-				
-				# Render page to image at 300 DPI
-				mat = fitz.Matrix(300/72, 300/72)
-				pix = page.get_pixmap(matrix=mat)
-				
-				# OCR using pdfocr_tobytes - creates PDF with text layer
-				try:
-					ocr_pdf_bytes = pix.pdfocr_tobytes(language="eng")
-					ocr_page_doc = fitz.open("pdf", ocr_pdf_bytes)
-					ocr_doc.insert_pdf(ocr_page_doc)
-					ocr_page_doc.close()
-				except Exception as ocr_err:
-					print(f"      ⚠ OCR failed for page {page_num + 1}: {ocr_err}")
-					# Insert original page as fallback
-					ocr_doc.insert_pdf(doc, from_page=page_num, to_page=page_num)
-				
-				pix = None  # Free memory
+			# OCR using pdfocr_tobytes - creates PDF with text layer
+			try:
+				ocr_pdf_bytes = pix.pdfocr_tobytes(language="eng")
+				ocr_page_doc = fitz.open("pdf", ocr_pdf_bytes)
+				ocr_doc.insert_pdf(ocr_page_doc)
+				ocr_page_doc.close()
+			except Exception as ocr_err:
+				print(f"      ⚠ OCR failed for page {page_num + 1}: {ocr_err}")
+				# Insert original page as fallback
+				ocr_doc.insert_pdf(doc, from_page=page_num, to_page=page_num)
 			
-			# Save final OCR'd PDF - NO linear=True (deprecated)
-			ocr_doc.save(output_path, garbage=4, deflate=True)
-			ocr_doc.close()
-			doc.close()
+			pix = None  # Free memory
+		
+		# Save final OCR'd PDF - NO linear=True (deprecated)
+		ocr_doc.save(output_path, garbage=4, deflate=True)
+		ocr_doc.close()
+		doc.close()
 			
-		# CASE 2: Has text - Just optimize
-		else:
-			print("  → Has text, optimizing...")
-			doc = fitz.open(str(pdf))
-			doc.save(output_path, garbage=4, deflate=True)
-			doc.close()
 		
 		# Verify text is selectable
 		final_text = get_text(output_path)
