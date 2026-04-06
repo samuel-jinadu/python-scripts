@@ -60,3 +60,5 @@ ocrPdfs/output/
 ocrPdfs/*.pdf
 splitPdfToChapters/
 getTiktokCaptions/temp_audio
+get-transcript/
+models/

@@ -76,7 +76,7 @@ try:
 	pyautogui.keyUp('alt')
 	heliumWin.activate()
 	
-	os.chdir(r"C:\Users\Samuel\Desktop\Remote Job\practice\python\titleCase")
+	os.chdir(r"C:\Users\Samuel\Desktop\Remote Job\practice\python\downloadPaper")
 	imageDownloadButton = Image.open('download-button.png').convert('RGB')
 	boxDownloadButton = pyautogui.locateOnScreen(imageDownloadButton, confidence=0.8)
 	centerDownloadButton = pyautogui.center(boxDownloadButton)
